@@ -57,6 +57,46 @@
             cd solr-docs
             java -jar post.jar 20newsgroups
           </pre>
+
+          <h2>An overview of Solr and Carrot<sup>2</sup> configurations</h2>
+
+          <p>There are several axes which diversify the configuration of Solr and
+            Carrot<sup>2</sup>:</p>
+          <ul>
+            <li>Where does clustering take place (inside Solr or outside Solr)?</li>
+            <li>What data is fed into the clustering process (entire contents of stored fields, query-in-context snippets)?</li>
+            <li>Are users experimenting with clustering parameters or is clustering preset on the server for all users?
+              For example the
+              <a href="http://download.carrot2.org/head/manual/index.html#section.webapp">web application front-end</a> to clustered search results
+              will be shared by all users, whereas users of
+              <a href="http://download.carrot2.org/head/manual/index.html#section.workbench">Carrot<sup>2</sup> Workbench</a> will need
+              a raw stream of search results which is then clustered on their machine.</li>
+          </ul>
+
+          <p>All examples in this chapter assume a certain fixed choice in the above set of configuration
+          options. Pick the one closest to your own.</p>
+
+          <h3>Clustering of entire fields inside Solr</h3>
+          <!--
+           how to map fields to title/snippet/url?
+           configuring Carrot2 webapp/Workbench to display clusters produced inside Solr
+          -->
+
+          <h3>Clustering of query-in-context fragments inside Solr</h3>
+          <!--
+           how to configure which fields are highlighted, parameters, etc?
+           configuring Carrot2 webapp/Workbench to display clusters produced inside Solr
+          -->
+
+          <h3>Clustering of entire fields outside Solr</h3>
+          <!--
+           custom field mapping via XSLT
+          -->
+
+          <h3>Clustering of query-in-context fragments outside Solr</h3>
+          <!--
+           a configuration which limits the amount of data passed to clustering (no full fields).
+          -->
         </div>
       </div>
     </div>
