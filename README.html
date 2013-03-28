@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Apache SOLR and Carrot<sup>2</sup> integration strategies</title>
+
+    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+    <link href="assets/css/prettify.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="span12">
+          <div class="page-header">
+            <h1>Apache SOLR and Carrot<sup>2</sup> integration strategies</h1>
+          </div>
+
+          <p>Adding clustering of search results to Apache Solr can be done in several ways,
+          depending on where the clustering takes place, which fields are picked for clustering
+          and how they are transformed before they are clustered. This document discusses
+          several of these strategies. The following github repository contains code samples
+          and configurations used in the remaining part of this document.</p>
+
+          <pre>
+            git clone https://github.com/carrot2/solr-integration-strategies.git
+          </pre>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/js/prettify.js"></script>
+    <script src="assets/js/jquery-1.8.2.min.js"></script>
+    <script>
+      $("pre").each(function(i,e) {
+        e = $(e);
+        e.text(e.text().trim());
+        e.addClass("prettyprint");
+      });
+    </script>
+  </body>
+</html>
