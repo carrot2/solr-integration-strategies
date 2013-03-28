@@ -19,11 +19,43 @@
           <p>Adding clustering of search results to Apache Solr can be done in several ways,
           depending on where the clustering takes place, which fields are picked for clustering
           and how they are transformed before they are clustered. This document discusses
-          several of these strategies. The following github repository contains code samples
-          and configurations used in the remaining part of this document.</p>
+          several of these strategies.</p>
 
+          <h2>Preparations</h2>
+
+          <p>The following github repository contains code samples
+          and configurations used in the remaining part of this document.</p>
           <pre>
             git clone https://github.com/carrot2/solr-integration-strategies.git
+          </pre>
+
+          <p>A local copy of Solr 4.2 will be required.</p>
+          <pre>
+            cd solr-integration-strategies
+            cd solr-configs
+            wget -c -t0 -T30 http://www.us.apache.org/dist/lucene/solr/4.2.0/solr-4.2.0.tgz
+            tar -zxf solr-4.2.0.tgz
+          </pre>
+
+          <p>The project contains an example Solr configuration (including data schema)
+            and some sample documents from the 20-newsgroups collection. The following command starts
+            Solr and imports these documents. Should be executed from another shell session
+            since it won't return to shell.</p>
+
+          <pre>
+            cd solr-4.*
+            cd example
+            java -Dsolr.solr.home=../../solr-home -jar start.jar
+          </pre>
+
+          <p>Once started, the search core should be visible in the administrative panel at
+          <a href="http://localhost:8983/solr/#/example" target="_blank">http://localhost:8983/solr/#/example</a>.</p>
+
+          <p>To import example documents execute the following commands:</p>
+
+          <pre>
+            cd solr-docs
+            java -jar post.jar 20newsgroups
           </pre>
         </div>
       </div>
@@ -32,11 +64,43 @@
     <script src="assets/js/prettify.js"></script>
     <script src="assets/js/jquery-1.8.2.min.js"></script>
     <script>
-      $("pre").each(function(i,e) {
-        e = $(e);
-        e.text(e.text().trim());
-        e.addClass("prettyprint");
-      });
+      (function() {
+        function trimIndent(ms) {
+          var lines = ms.split(/[\r\n]+/);
+
+          // calculate common indent.
+          var maxIndent = Number.MAX_VALUE;
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            if (line.trim().length > 0) {
+              var prefix = /^[ ]+/.exec(line);
+              if (prefix) {
+                maxIndent = Math.min(maxIndent, prefix[0].length);
+              }
+            }
+          }
+
+          var reindented = [];
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            if (line.trim().length > 0) {
+              line = line.substring(maxIndent);
+            }
+            reindented.push(line);
+          }
+
+          while (reindented.length > 0 && reindented[0].trim().length == 0) { reindented.shift(); }
+          while (reindented.length > 0 && reindented[reindented.length - 1].trim().length == 0) { reindented.pop(); }
+
+          return reindented.join("\n");
+        }
+
+        $("pre").each(function(i,e) {
+          e = $(e);
+          e.text(trimIndent(e.text()));
+          e.addClass("prettyprint");
+        });
+      })();
     </script>
   </body>
 </html>
