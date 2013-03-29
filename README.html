@@ -76,33 +76,227 @@
           <p>All examples in this chapter assume a certain fixed choice in the above set of configuration
           options. Pick the one closest to your own.</p>
 
-          <h3>Clustering of entire fields inside Solr</h3>
-          <!--
-           how to map fields to title/snippet/url?
-           configuring Carrot2 webapp/Workbench to display clusters produced inside Solr
-          -->
+          <h3>Clustering inside Solr, entire fields</h3>
 
-          <h3>Clustering of query-in-context fragments inside Solr</h3>
-          <!--
-           how to configure which fields are highlighted, parameters, etc?
-           configuring Carrot2 webapp/Workbench to display clusters produced inside Solr
+          <p>This configuration clusters the selected fields of Solr documents returned
+            for a given query.</p>
+
+          <div class="alert alert-danger">
+            <strong>Warning!</strong> Clustering full content of large fields may be very slow and
+            may result in out of memory errors on the server. This configuration should only be
+            used on sensibly sized fields or when such behavior is desired.
+          </div>
+
+          <dl>
+            <dt>Solr setup (JAR dependencies)</dt>
+            <dd>
+              <p>Modify <code>solrconfig.xml</code>. Include Carrot<sup>2</sup> JARs distributed with Solr and any
+                other JARs needed for clustering algorithms (if using Lingo3G, for example). Note that
+                the paths provided to <code>lib</code> are resolved relative to the core's directory (unless they
+                are absolute). This can be tricky. For our layout the configuration is:</p>
+              <pre class="escape prettyprint">
+                <lib dir="../../solr-4.2.0/contrib/clustering/lib/" regex=".*\.jar"></lib>
+                <lib dir="../../solr-4.2.0/dist/" regex=".*solr-clustering-.*\.jar"></lib>
+              </pre>
+            </dd>
+
+            <dt>Solr setup (search component)</dt>
+            <dd>
+              <p>Configure a <code>searchComponent</code> which does the actual clustering. Solr's
+                <a href="http://wiki.apache.org/solr/ClusteringComponent">wiki</a> has detailed
+                instructions covering all options. For this example we will configure a single
+                search component with one algorithm (the open source Lingo).</p>
+
+              <pre class="escape prettyprint">
+                <searchComponent name="clustering" enable="true" class="solr.clustering.ClusteringComponent">
+                  <lst name="engine">
+                    <str name="name">default</str>
+                    <str name="carrot.algorithm">org.carrot2.clustering.lingo.LingoClusteringAlgorithm</str>
+
+                    <str name="LingoClusteringAlgorithm.desiredClusterCountBase">20</str>
+                    <str name="carrot.lexicalResourcesDir">clustering/carrot2</str>
+                    <str name="MultilingualClustering.defaultLanguage">ENGLISH</str>
+                  </lst>
+                </searchComponent>
+              </pre>
+            </dd>
+
+            <dt>Solr setup (search handler)</dt>
+            <dd>
+              <p>Once we have a clustering search component we can create a handler that will cluster
+                search results. In this configuration all fields of matching documents
+                are returned, followed by information about clusters.</p>
+
+              <pre class="escape prettyprint">
+                <requestHandler name="/config1_1" class="solr.SearchHandler">
+                  <lst name="defaults">
+                    <str name="defType">edismax</str>
+                    <str name="qf">
+                      title^1.5 content^1.0
+                    </str>
+                    <str name="rows">100</str>
+                    <str name="fl">*,score</str>
+
+                    <!-- Enable clustering. -->
+                    <bool name="clustering">true</bool>          <!-- enable clustering -->
+                    <bool name="clustering.results">true</bool>  <!-- cluster search results, not the collection -->
+                    <str  name="clustering.engine">default</str> <!-- use the default engine -->
+
+                    <!-- Solr-to-Carrot2 field mapping. -->
+                    <str  name="carrot.url">name</str>           <!-- unique ID field, doesn't have to be an URL -->
+                    <str  name="carrot.title">title</str>        <!-- document title field. -->
+                    <str  name="carrot.snippet">content</str>    <!-- document "contents" field -->
+                  </lst>
+
+                  <!-- Attach clustering as the last processing component. -->
+                  <arr name="last-components">
+                    <str>clustering</str>
+                  </arr>
+                </requestHandler>
+              </pre>
+
+              <p>Note the mapping between Solr document's fields and "logical" document sections requried by Carrot<sup>2</sup>.
+              The <code>carrot.url</code> field must be something unique because clusters in the response are referenced by
+              this identifier. Also note the default number of search results to retrieve is 100. Clustering search
+                results requires between 100 and 400 results to be meaningful. This does add up to each query's cost on
+                Solr, in addition to the clustering itself.</p>
+
+              <p>A query sent to this handler will fetch a large file, we will try to do something with this in the
+              next section:</p>
+              <pre>
+                wget -q -O - "http://localhost:8983/solr/example/config1_1?q=memory&wt=xml&indent=true" | wc -c
+                858190
+              </pre>
+            </dd>
+
+            <dt>Solr setup (search handler returning a subset of fields)</dt>
+            <dd>
+
+            <p>The problem is that the response contains <code>content</code> field which is large. We can restrict
+              the result to only contain <code>name</code> and <code>title</code> by modifying the <code>fl</code>
+              parameter. Note that clustering will <strong>still fetch the entire <code>content</code> field
+              internally</strong> so this does not affect clusters. Actually, if only the clusters are needed
+              one could restrict the fields to just the ID field (<code>name</code> in this example).</p>
+
+              <pre class="escape prettyprint">
+                <!--
+                Restrict the returned fields to just the name and title.
+                contents can be too large to display anyway.
+                -->
+                <str name="fl">name,title,score</str>
+              </pre>
+
+              <p>This results in an much smaller response:</p>
+              <pre>
+                wget -q -O - "http://localhost:8983/solr/example/config1_2?q=memory&wt=xml&indent=true" | wc -c
+                22895
+              </pre>
+            </dd>
+
+            <dt>Solr setup (search handler returning contextual snippets)</dt>
+            <dd>
+              <p>If the response documents should be displayed (and contain clusters as well) then the middle
+                ground between skipping fields and returning full fields is to use
+                the highlighter to display a contextual fragment of the field around the search
+                hit. This limits the size of the response and allows some insight into the document.
+                Clusters are unaffected in this configuration (full content field is still clustered).</p>
+
+              <pre>
+                wget -q -O - "http://localhost:8983/solr/example/config1_3?q=memory&wt=xml&indent=true" | wc -c
+                65700
+              </pre>
+            </dd>
+          </dl>
+
+
+          <h3>Clustering inside Solr, query-in-context fragments</h3>
+
+          <p>This configuration is similar to clustering full fields inside Solr but takes
+            only a certain number of text fragments around search matches. Doing so, perhaps contrary
+            to the intuition, has several benefits:</p>
+
+          <ul>
+            <li>increased speed of clustering due to smaller amount of data fed to the algorithm,</li>
+            <li>more query-focused clusters due to the fact that the text around the search matches
+            is typically closely related to the query itself.</li>
+          </ul>
+
+          <p>
+            The initial configuration setup (JARs, search components) is identical to the one shown in
+            previous configurations. We will focus on search handlers only.
+          </p>
+
+          <dl>
+            <dt>Solr setup (search handler clustering query-in-context snippets)</dt>
+            <dd>
+
+              <p>
+                Compare the difference in processing time (<code>QTime</code>) on the server for the configuration
+                returning the same fields but clustering full <code>content</code> field:
+              </p>
+              <pre>
+              INFO: [example] webapp=/solr path=/config1_2 params={indent=true&q=memory&wt=xml} hits=130 status=0 QTime=987
+              INFO: [example] webapp=/solr path=/config1_2 params={indent=true&q=memory&wt=xml} hits=130 status=0 QTime=973
+              INFO: [example] webapp=/solr path=/config1_2 params={indent=true&q=memory&wt=xml} hits=130 status=0 QTime=959
+              </pre>
+              <p>and just the snippets from <code>content</code> or <code>title</code>:</p>
+              <pre>
+              INFO: [example] webapp=/solr path=/config2_1 params={indent=true&q=memory&wt=xml} hits=130 status=0 QTime=272
+              INFO: [example] webapp=/solr path=/config2_1 params={indent=true&q=memory&wt=xml} hits=130 status=0 QTime=230
+              INFO: [example] webapp=/solr path=/config2_1 params={indent=true&q=memory&wt=xml} hits=130 status=0 QTime=199
+              </pre>
+              <p>
+                For larger fields the difference would be even more pronounced.
+              </p>
+
+              <div class="alert alert-info">
+                <strong>Note:</strong> The set of clusters returned from full-field clustering will be different than
+                that returned from clustering based on fragments. This is natural as the clustering algorithm "sees"
+                a different aspect of the input and produces a different categorization. Consider a human presented
+                with 100 documents -- he or she would categorize them differently if taken as a whole,
+                compared to the situation when only an excerpt of a specific context is provided.
+              </div>
+            </dd>
+          </dl>
+
+          <h3>Displaying Solr-clustered results in Carrot<sup>2</sup> webapp and Workbench</h3>
+
+          <p>Carrot<sup>2</sup>'s web application and the Workbench can serve as front-ends
+            for Solr-clustered search results, even though their primary purpose is to
+            perform clustering, not just provide the user interface for clusters generated
+            somewhere else.</p>
+
+          <!-- TODO:
+           wget http://download.carrot2.org/stable/3.6.2/carrot2-webapp-3.6.2.war
+           unzip -d carrot2-webapp carrot2-webapp-3.6.2.war
           -->
 
           <h3>Clustering of entire fields outside Solr</h3>
           <!--
            custom field mapping via XSLT
           -->
+          <div class="alert alert-info">
+            Write me. <!-- TODO -->
+          </div>
 
           <h3>Clustering of query-in-context fragments outside Solr</h3>
           <!--
            a configuration which limits the amount of data passed to clustering (no full fields).
           -->
+          <div class="alert alert-info">
+            Write me. <!-- TODO -->
+          </div>
+
+
+          <!--
+           TODO: configuring Carrot2 webapp/Workbench to display clusters produced inside Solr
+          -->
         </div>
       </div>
     </div>
 
-    <script src="assets/js/prettify.js"></script>
     <script src="assets/js/jquery-1.8.2.min.js"></script>
+    <script src="assets/js/prettify.js"></script>
     <script>
       (function() {
         function trimIndent(ms) {
@@ -137,9 +331,15 @@
 
         $("pre").each(function(i,e) {
           e = $(e);
-          e.text(trimIndent(e.text()));
-          e.addClass("prettyprint");
+          var text;
+          if (e.hasClass("escape")) {
+            text = e.html();
+          } else {
+            text = e.text();
+          }
+          e.text(trimIndent(text));
         });
+        prettyPrint();
       })();
     </script>
   </body>
