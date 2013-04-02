@@ -184,6 +184,45 @@
     </arr>
   </requestHandler>
 
+  <requestHandler name="/config2_2" class="solr.SearchHandler">
+    <lst name="defaults">
+      <str name="defType">edismax</str>
+      <str name="qf">
+        title^1.5 content^1.0
+      </str>
+      <str name="rows">100</str>
+
+      <str name="fl">name,title,score</str>
+
+      <!-- Enable highlighter for the content field -->
+      <bool name="hl">true</bool>
+      <str  name="hl.fl">content</str>
+      <!-- Disable highlight wrapping. -->
+      <str name="hl.simple.pre"><!-- --></str>
+      <str name="hl.simple.post"><!-- --></str>
+      <str name="f.content.hl.snippets">3</str> <!-- max 3 snippets of 200 chars. -->
+      <str name="f.content.hl.fragsize">200</str>
+
+      <bool name="clustering">true</bool>
+      <bool name="clustering.results">true</bool>
+      <str  name="clustering.engine">default</str>
+
+      <!-- field mapping -->
+      <str  name="carrot.url">name</str>
+      <str  name="carrot.title">title</str>
+      <str  name="carrot.snippet">content</str>
+
+      <!-- enable clustering on highlighted fragments only. -->
+      <str name="carrot.produceSummary">true</str>
+      <!-- take a max. of 3 fragments from each document's match. -->
+      <str name="carrot.summarySnippets">3</str>
+    </lst>
+
+    <arr name="last-components">
+      <str>clustering</str>
+    </arr>
+  </requestHandler>
+
   <!-- Typical handler. -->
 
   <requestHandler name="/select" class="solr.SearchHandler">

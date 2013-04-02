@@ -158,7 +158,7 @@
               <p>Note the mapping between Solr document's fields and "logical" document sections requried by Carrot<sup>2</sup>.
               The <code>carrot.url</code> field must be something unique because clusters in the response are referenced by
               this identifier. Also note the default number of search results to retrieve is 100. Clustering search
-                results requires between 100 and 400 results to be meaningful. This does add up to each query's cost on
+                results will be meaningful if more than 100 documents are available to the algorithm. This does add up to each query's cost on
                 Solr, in addition to the clustering itself.</p>
 
               <p>A query sent to this handler will fetch a large file, we will try to do something with this in the
@@ -201,6 +201,41 @@
                 hit. This limits the size of the response and allows some insight into the document.
                 Clusters are unaffected in this configuration (full content field is still clustered).</p>
 
+              <pre class="escape prettyprint">
+                <requestHandler name="/config1_3" class="solr.SearchHandler">
+                  <lst name="defaults">
+                    <str name="defType">edismax</str>
+                    <str name="qf">
+                      title^1.5 content^1.0
+                    </str>
+                    <str name="rows">100</str>
+
+                    <str name="fl">name,title,score</str>
+
+                    <!-- Enable highlighter for the content field -->
+                    <bool name="hl">true</bool>
+                    <str  name="hl.fl">content</str>
+                    <!-- Disable highlight wrapping. -->
+                    <str name="hl.simple.pre"><!-- --></str>
+                    <str name="hl.simple.post"><!-- --></str>
+                    <str name="f.content.hl.snippets">3</str> <!-- max 3 snippets of 200 chars. -->
+                    <str name="f.content.hl.fragsize">200</str>
+
+                    <bool name="clustering">true</bool>
+                    <bool name="clustering.results">true</bool>
+                    <str name="clustering.engine">default</str>
+
+                    <str  name="carrot.url">name</str>
+                    <str  name="carrot.title">title</str>
+                    <str  name="carrot.snippet">content</str>
+                  </lst>
+
+                  <arr name="last-components">
+                    <str>clustering</str>
+                  </arr>
+                </requestHandler>
+              </pre>
+
               <pre>
                 wget -q -O - "http://localhost:8983/solr/example/config1_3?q=memory&wt=xml&indent=true" | wc -c
                 65700
@@ -230,7 +265,7 @@
             <dt>Solr setup (search handler clustering query-in-context snippets)</dt>
             <dd>
               <p>To configure clustering to use query-in-context snippets instead of full field content,
-              pass <code>xxx</code> attribute in Solr's handler configuration, as shown below:</p>
+              pass <code>carrot.produceSummary</code> attribute in Solr's handler configuration, as shown below:</p>
 
               <pre class="escape prettyprint">
                 <requestHandler name="/config2_1" class="solr.SearchHandler">
@@ -290,41 +325,184 @@
                 with 100 documents -- he or she would categorize them differently if taken as a whole,
                 compared to the situation when only an excerpt of a specific context is provided.
               </div>
+
+              <p>
+                Note that clustering and highlighter fragments are independent so it's possible to use both at the
+                same time, as shown below.
+              </p>
+
+              <pre class="escape prettyprint">
+                <requestHandler name="/config2_2" class="solr.SearchHandler">
+                  <lst name="defaults">
+                    <str name="defType">edismax</str>
+                    <str name="qf">
+                      title^1.5 content^1.0
+                    </str>
+                    <str name="rows">100</str>
+
+                    <str name="fl">name,title,score</str>
+
+                    <!-- Enable highlighter for the content field -->
+                    <bool name="hl">true</bool>
+                    <str  name="hl.fl">content</str>
+                    <!-- Disable highlight wrapping. -->
+                    <str name="hl.simple.pre"><!-- --></str>
+                    <str name="hl.simple.post"><!-- --></str>
+                    <str name="f.content.hl.snippets">3</str> <!-- max 3 snippets of 200 chars. -->
+                    <str name="f.content.hl.fragsize">200</str>
+
+                    <bool name="clustering">true</bool>
+                    <bool name="clustering.results">true</bool>
+                    <str  name="clustering.engine">default</str>
+
+                    <!-- field mapping -->
+                    <str  name="carrot.url">name</str>
+                    <str  name="carrot.title">title</str>
+                    <str  name="carrot.snippet">content</str>
+
+                    <!-- enable clustering on highlighted fragments only. -->
+                    <str name="carrot.produceSummary">true</str>
+                    <!-- take a max. of 3 fragments from each document's match. -->
+                    <str name="carrot.summarySnippets">3</str>
+                  </lst>
+
+                  <arr name="last-components">
+                    <str>clustering</str>
+                  </arr>
+                </requestHandler>
+              </pre>
             </dd>
           </dl>
 
           <h3>Displaying Solr-clustered results in Carrot<sup>2</sup> webapp and Workbench</h3>
 
           <p>Carrot<sup>2</sup>'s web application and the Workbench can serve as front-ends
-            for Solr-clustered search results, even though their primary purpose is to
+            for Solr-clustered search results (starting from Carrot<sup>2</sup> version
+            <code>3.6.3</code>), even though their primary purpose is to
             perform clustering, not just provide the user interface for clusters generated
             somewhere else.</p>
 
-          <!-- TODO:
-           wget http://download.carrot2.org/stable/3.6.2/carrot2-webapp-3.6.2.war
-           unzip -d carrot2-webapp carrot2-webapp-3.6.2.war
-          -->
+          <p>For both applications the trick is to use an XSLT stylesheet that will translate
+            Solr's XML output into Carrot<sup>2</sup> results format and use a pass-through algorithm
+            that does not perform any clustering, only copies input clusters to the output.</p>
+
+          <p>Solr's output can vary depending on the schema so there is no one solution that fits
+            all the configurations. For our examples we will use Solr's handler that returns
+            highlighter snippets and clusters described above (configuration <code>/config2_2</code>),
+            combined with an XSLT template
+            that adapts the result for Carrot<sup>2</sup>. Note the <code>name</code> field
+            is used as the document identifier.</p>
+
+          <p>The stylesheet performing the conversion is available here: <a href="assets/solr-to-c2.xsl">assets/solr-to-c2.xsl</a>.
+            Once downloaded, the Workbench's source configuration can be set up to fetch documents from Solr and show clusters
+            contained in the response (see highlighted fields in the figure below).
+          </p>
+
+          <div>
+            <img src="assets/capture-1-highlights.png" class="img-polaroid" />
+          </div>
+
+          <p style="margin-top: 2em">The web application can be configured in a similar fashion by modifying the default
+            component suite and preconfiguring an XML document source. Start by fetching the source code
+            of the web application.</p>
+
+          <pre>
+            wget http://download.carrot2.org/stable/3.6.3/carrot2-webapp-3.6.3.war
+            unzip -d carrot2-webapp carrot2-webapp-3.6.3.war
+            cd carrot2-webapp/WEB-INF/suites
+            vi suite-webapp.xml
+          </pre>
+
+          <p>Edit <code>suite-webapp.xml</code> to point at the Solr instance and contain just the pass-through algorithm.</p>
+
+          <pre class="escape prettyprint">
+            <component-suite>
+              <sources>
+                <!-- our solr instance -->
+                <source component-class="org.carrot2.source.xml.XmlDocumentSource" id="xml"
+                        attribute-sets-resource="source-xml-attributes.xml">
+                <label>Solr</label>
+                <title>Solr</title>
+                <icon-path>icons/xml.gif</icon-path>
+                <mnemonic>X</mnemonic>
+                <description>Blah Blah</description>
+                </source>
+              </sources>
+
+              <include suite="algorithm-passthrough.xml" />
+            </component-suite>
+          </pre>
+
+          <p>The address and remaining attributes of Solr need to be placed into <code>source-xml-attributes.xml</code>.</p>
+
+          <pre class="escape prettyprint">
+            <attribute-sets default="overridden-attributes">
+              <attribute-set id="overridden-attributes">
+                <value-set>
+                  <label>overridden-attributes</label>
+
+                  <attribute key="XmlDocumentSource.xml">
+                    <value>
+                      <wrapper class="org.carrot2.util.resource.URLResourceWithParams"
+                               url="http://localhost:8983/solr/example/config2_2?q=${query}&amp;rows=${results}&amp;wt=xml&amp;indent=true" />
+                    </value>
+                  </attribute>
+                  <attribute key="XmlDocumentSource.xslt">
+                    <value>
+                      <wrapper class="org.carrot2.util.resource.ClassLoaderResource" resource="/solr-to-c2.xsl"/>
+                    </value>
+                  </attribute>
+                  <attribute key="XmlDocumentSource.readAll">
+                    <value value="true"/>
+                  </attribute>
+                  <attribute key="XmlDocumentSource.readClusters">
+                    <value value="true" />
+                  </attribute>
+                </value-set>
+              </attribute-set>
+            </attribute-sets>
+          </pre>
+
+          <p>Finally, the XSLT stylesheet must be available in classpath for the XML document source component. Copy it over
+          to <code>WEB-INF/classes/solr-to-c2.xsl</code>. When this context (or repacked WAR file) is deployed in a servlet
+          container it will query Solr instance and displays the clusters received from it.</p>
+
+          <div>
+            <img src="assets/capture-2.png" class="img-polaroid" />
+          </div>
+
+          <div style="margin-top: 2em;" class="alert alert-info">
+            Note that the above examples stretch the functionality of Carrot<sup>2</sup> examples to what they
+            were not designed for. In production environments you will probably want to write your own handler of
+            Solr search/ clustered results that doesn't go through XSLT overhead, etc.
+          </div>
+
 
           <h3>Clustering of entire fields outside Solr</h3>
-          <!--
-           custom field mapping via XSLT
-          -->
-          <div class="alert alert-info">
-            Write me. <!-- TODO -->
+
+          <p>This is pretty much what <code>SolrDocumentSource</code> does by default. You just need to map
+            Carrot<sup>2</sup> logical document sections (title, snippet, url) to Solr's schema and make sure
+            the handler returns those fields as described when discussing different handler
+            configurations above.</p>
+
+          <p>Full fields clustering outside Solr may incur large network overhead penalty and will result in odd-looking long
+            snippets if stored Solr fields are lengthy. For Workbench this can be tuned inside preferences, as shown below.</p>
+
+          <div>
+            <img src="assets/capture-3-highlights.png" class="img-polaroid" />
           </div>
+
 
           <h3>Clustering of query-in-context fragments outside Solr</h3>
-          <!--
-           a configuration which limits the amount of data passed to clustering (no full fields).
-          -->
-          <div class="alert alert-info">
-            Write me. <!-- TODO -->
-          </div>
 
-
-          <!--
-           TODO: configuring Carrot2 webapp/Workbench to display clusters produced inside Solr
-          -->
+          <p>
+            Because Solr's output depends on the schema and configuration of handlers this configuration is identical
+            to the one shown before, where query-in-context fragments were clustered inside Solr. An XML component
+            needs to be configured with an XSLT stylesheet that copies highlighter fragments to their corresponding
+            Carrot<sup>2</sup> XML locations inside <code>snippet</code> field. The only difference to previously
+            shown configuration is that one should pick a real clustering algorithm instead of the
+            pass-through dummy. Obviously clustering on Solr side is not needed anymore.
+          </p>
         </div>
       </div>
     </div>
