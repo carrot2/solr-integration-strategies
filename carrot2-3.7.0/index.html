@@ -16,7 +16,7 @@
             <h1>Apache SOLR and Carrot<sup>2</sup> integration strategies</h1>
           </div>
 
-          <p><span class="badge badge-important">Carrot2 3.6.3</span>, <span class="badge badge-important">Solr 4.2.1</span></p>
+          <p><span class="badge badge-important">Carrot2 3.7.0</span>, <span class="badge badge-important">Solr 4.2.1</span></p>
 
           <p>Adding clustering of search results to Apache Solr can be done in several ways,
           depending on where the clustering takes place, which fields are picked for clustering
@@ -34,7 +34,7 @@
           <p>A local copy of Solr 4.2.1 will be required.</p>
           <pre>
             cd solr-integration-strategies
-            cd carrot2-3.6.3/
+            cd carrot2-3.7.0/
             wget -c -t0 -T30 http://www.us.apache.org/dist/lucene/solr/4.2.1/solr-4.2.1.tgz
             tar -zxf solr-4.2.1.tgz
           </pre>
@@ -413,11 +413,14 @@
           <p>
             Even though not designed for such a use case, Carrot<sup>2</sup>'s
             web application and the Workbench can serve as front-ends
-            for Solr-clustered search results (starting from Carrot<sup>2</sup> version
-            <code>3.6.3</code>). For both applications the trick is to use an XSLT stylesheet that will translate
-            Solr's XML output into Carrot<sup>2</sup> results format and use a pass-through algorithm
-            that does not perform any clustering, only copies input clusters to the output. We will then have
-            the following situation:</p>
+            for Solr-clustered search results. Starting with version <code>3.7.0</code>,
+            <code>SolrDocumentSource</code> can be told to fetch clusters produced by Solr and optionally use
+            the highlighter's output. For versions prior to <code>3.7.0</code>, a custom XSLT
+            transformation stylesheet combined with <code>XmlDocumentSource</code> needs to be used
+            (<a href="../carrot2-3.6.3/index.html">see here</a>).
+          </p>
+
+          <p>Such a configuration will correspond to the following diagram:</p>
 
           <p class="pagination-centered">
             <img src="../assets/strategies-2.png" class="img-polaroid" />
@@ -429,29 +432,26 @@
             <img src="../assets/strategies-4.png" class="img-polaroid" />
           </p>
 
-          <p>Solr's output can vary depending on the schema so there is no one solution that fits
-            all the possible Solr configurations. For our examples we will use Solr's handler that returns
-            highlighter snippets and clusters described above (configuration <code>/config2_2</code>),
-            combined with an XSLT template
-            that adapts the result for Carrot<sup>2</sup>. Note the <code>name</code> field
-            is used as the document identifier.</p>
-
-          <p>The stylesheet performing the conversion is available here: <a href="solr-to-c2.xsl">solr-to-c2.xsl</a>.
-            Once downloaded, the Workbench's source configuration can be set up to fetch documents from Solr and show clusters
-            contained in the response (see highlighted fields in the figure below).
+          <p>
+            A screenshot with Workbench configuration to access clusters in
+            our example's <code>/config2_2</code> looks as shown below. Note the output
+            in the screenshot is hierarchical -- this is so because <a href="http://carrotsearch.com/lingo3g-overview">Lingo3G</a>
+            (a commercial algorithm plugging into the Carrot<sup>2</sup> framework) was
+            used for its preparation. Solr configuration was identical except for the clustering implementation
+            name passed via <code>carrot.algorithm</code> parameter.
           </p>
 
           <p>
-            <img src="../assets/capture-1-highlights.png" class="img-polaroid" />
+            <img src="../assets/capture-4-highlights.png" class="img-polaroid" />
           </p>
 
-          <p>The webapp can be configured in a similar fashion by modifying the default
-            component suite and preconfiguring an XML document source. Start by fetching the WAR file
-            of the webapp:</p>
+          <p>The webapp can be configured to proxy Solr clusterer's output in a similar fashion simply
+            by adjusting the default attributes configuring <code>SolrDocumentSource</code>.
+            Start by fetching the WAR file of the webapp:</p>
 
           <pre>
-            wget http://download.carrot2.org/stable/3.6.3/carrot2-webapp-3.6.3.war
-            unzip -d carrot2-webapp carrot2-webapp-3.6.3.war
+            wget http://download.carrot2.org/stable/3.7.0/carrot2-webapp-3.7.0.war
+            unzip -d carrot2-webapp carrot2-webapp-3.7.0.war
             cd carrot2-webapp/WEB-INF/suites
             vi suite-webapp.xml
           </pre>
@@ -461,22 +461,26 @@
           <pre class="escape prettyprint">
             <component-suite>
               <sources>
-                <!-- our solr instance -->
-                <source component-class="org.carrot2.source.xml.XmlDocumentSource" id="xml"
-                        attribute-sets-resource="source-xml-attributes.xml">
+                <source component-class="org.carrot2.source.solr.SolrDocumentSource" id="solr"
+                        attribute-sets-resource="source-solr-attributes.xml">
                 <label>Solr</label>
-                <title>Solr</title>
-                <icon-path>icons/xml.gif</icon-path>
-                <mnemonic>X</mnemonic>
-                <description>Blah Blah</description>
+                <title>Solr Search Engine</title>
+                <icon-path>icons/solr.png</icon-path>
+                <mnemonic>s</mnemonic>
+                <description>Solr document source queries an instance of Apache Solr search engine.</description>
+                <example-queries>
+                  <example-query>test</example-query>
+                  <example-query>solr</example-query>
+                </example-queries>
                 </source>
               </sources>
 
+              <!-- Algorithms -->
               <include suite="algorithm-passthrough.xml" />
             </component-suite>
           </pre>
 
-          <p>The address and remaining attributes of Solr need to be placed into <code>source-xml-attributes.xml</code>.</p>
+          <p>The address and remaining attributes of Solr need to be placed into <code>source-solr-attributes.xml</code>.</p>
 
           <pre class="escape prettyprint">
             <attribute-sets default="overridden-attributes">
@@ -484,38 +488,41 @@
                 <value-set>
                   <label>overridden-attributes</label>
 
-                  <attribute key="XmlDocumentSource.xml">
-                    <value>
-                      <wrapper class="org.carrot2.util.resource.URLResourceWithParams"
-                               url="http://localhost:8983/solr/example/config2_2?q=${query}&amp;rows=${results}&amp;wt=xml&amp;indent=true" />
-                    </value>
+                  <attribute key="SolrDocumentSource.serviceUrlBase">
+                    <value value="http://localhost:8983/solr/example/config2_2"/>
                   </attribute>
-                  <attribute key="XmlDocumentSource.xslt">
-                    <value>
-                      <wrapper class="org.carrot2.util.resource.ClassLoaderResource" resource="/solr-to-c2.xsl"/>
-                    </value>
+                  <attribute key="SolrDocumentSource.solrSummaryFieldName">
+                    <value value="content"/>
                   </attribute>
-                  <attribute key="XmlDocumentSource.readAll">
+                  <attribute key="SolrDocumentSource.solrTitleFieldName">
+                    <value value="title"/>
+                  </attribute>
+                  <attribute key="SolrDocumentSource.solrUrlFieldName">
+                    <value value="name"/>
+                  </attribute>
+
+                  <!-- Proxy clusters from Solr. Link on 'name' field. -->
+                  <attribute key="SolrDocumentSource.solrIdFieldName">
+                    <value value="name"/>
+                  </attribute>
+                  <attribute key="SolrDocumentSource.readClusters">
                     <value value="true"/>
-                  </attribute>
-                  <attribute key="XmlDocumentSource.readClusters">
-                    <value value="true" />
                   </attribute>
                 </value-set>
               </attribute-set>
             </attribute-sets>
           </pre>
 
-          <p>Finally, the XSLT stylesheet must be available in classpath for the XML document source component. Copy it over
-          to <code>WEB-INF/classes/solr-to-c2.xsl</code>. When this context (or repacked WAR file) is deployed in a servlet
-          container it will query Solr instance and displays the clusters received from it.</p>
+          <p>Note that the default Carrot<sup>2</sup> interface exposes customizable document source attributes,
+          which may be a security problem in real deployments. We strongly encourage you to fork the default
+          web application and tailor it to your needs in such cases.</p>
 
           <p>
-            <img src="../assets/capture-2.png" class="img-polaroid" />
+            <img src="../assets/capture-5.png" class="img-polaroid" />
           </p>
 
           <div class="alert alert-info">
-            Note that the above examples stretch the functionality of Carrot<sup>2</sup> examples to what they
+            The above examples stretch the functionality of Carrot<sup>2</sup> examples to what they
             were not designed for. In production environments you will probably want to write your own handler of
             Solr search/ clustered results that doesn't go through XSLT overhead, etc.
           </div>
@@ -536,22 +543,21 @@
 
           <p>Note that full fields clustering outside Solr may incur large network overhead penalty associated
             with fetching long fields over the network and may result in odd-looking long
-            snippets if stored Solr fields are lengthy. For Workbench this can be tuned inside preferences, as shown below.</p>
+            snippets if stored Solr fields are lengthy. For Workbench this can be tuned inside preferences,
+            as shown below.</p>
 
-          <div>
-            <img src="../assets/capture-3-highlights.png" class="img-polaroid" />
-          </div>
-
+          <p>
+            <img src="../assets/capture-6.png" class="img-polaroid" />
+          </p>
 
           <h3>Clustering of query-in-context fragments outside Solr</h3>
 
+          <p>Alternatively to returning and clustering full fields, starting from version
+            <code>3.7.0</code> <code>SolrDocumentSource</code> can use highlighter
+            fragments if they are available in Solr's response.</p>
+
           <p>
-            Because Solr's output depends on the schema and configuration of handlers this configuration is identical
-            to the one shown before, where query-in-context fragments were clustered inside Solr. An XML component
-            needs to be configured with an XSLT stylesheet that copies highlighter fragments to their corresponding
-            Carrot<sup>2</sup> XML locations inside <code>snippet</code> field. The only difference to previously
-            shown configuration is that one should pick a real clustering algorithm instead of the
-            pass-through dummy. Obviously clustering on Solr side is not needed anymore.
+            <img src="../assets/capture-7.png" class="img-polaroid" />
           </p>
         </div>
       </div>

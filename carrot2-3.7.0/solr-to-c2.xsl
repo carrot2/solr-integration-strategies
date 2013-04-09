@@ -7,7 +7,7 @@
 
   <xsl:template match="/">
     <searchresult>
-      <!-- Query hint -->
+      <!-- query hint -->
       <query><xsl:value-of select="/response/lst[@name='responseHeader']/lst[@name='params']/str[@name='q']" /></query>
 
       <!-- Emit documents. -->
@@ -26,14 +26,26 @@
         </document>
       </xsl:for-each>
 
-      <!-- Extract Solr-generated clusters if any. -->
-      <xsl:if test="/response/arr[@name='clusters']">
-        <xsl:comment>Clusters from Solr</xsl:comment>
+      <!-- Emit clusters, if present. -->
+      <xsl:comment>Clusters from Solr</xsl:comment>
 
-        <xsl:for-each select="/response/arr[@name = 'clusters']/lst">
-          <xsl:call-template name="cluster-adapter" />
-        </xsl:for-each>
-      </xsl:if>
+      <xsl:for-each select="/response/arr[@name = 'clusters']/lst">
+        <group>
+          <title>
+            <xsl:for-each select="arr[@name = 'labels']/str">
+              <phrase><xsl:value-of select="." /></phrase>
+            </xsl:for-each>
+          </title>
+
+          <xsl:if test="bool[@name = 'other-topics'] = 'true'">
+            <attribute key="other-topics"><value value="true"/></attribute>
+          </xsl:if>
+
+          <xsl:for-each select="arr[@name = 'docs']/str">
+            <document refid="{count(key('docs',.)/preceding-sibling::doc)}" />
+          </xsl:for-each>
+        </group>
+      </xsl:for-each>
 
       <!-- extra attributes -->
       <xsl:if test="/response/result/@numFound">
@@ -42,33 +54,5 @@
         </attribute>
       </xsl:if>
     </searchresult>
-  </xsl:template>
-
-  <!-- Solr to Carrot2 cluster adapter. -->  
-  <xsl:template name="cluster-adapter">
-    <group>
-      <xsl:if test="double[@name = 'score']">
-        <xsl:attribute name="score"><xsl:value-of select="double[@name = 'score']"/></xsl:attribute>
-      </xsl:if>
-
-      <title>
-        <xsl:for-each select="arr[@name = 'labels']/str">
-          <phrase><xsl:value-of select="." /></phrase>
-        </xsl:for-each>
-      </title>
-      
-      <xsl:if test="bool[@name = 'other-topics'] = 'true'">
-        <attribute key="other-topics"><value value="true"/></attribute>
-      </xsl:if>
-
-      <xsl:for-each select="arr[@name = 'docs']/str">
-        <document refid="{count(key('docs',.)/preceding-sibling::doc)}" />
-      </xsl:for-each>
-
-      <!-- sub-clusters? -->
-      <xsl:for-each select="arr[@name = 'clusters']/lst">
-        <xsl:call-template name="cluster-adapter" />
-      </xsl:for-each>
-    </group>
   </xsl:template>
 </xsl:stylesheet>
