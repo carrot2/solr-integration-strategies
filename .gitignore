@@ -1,2 +1,4 @@
 .idea
-solr-configs/solr-*.*.*
+solr-4.2.1
+solr-4.2.1.tgz
+data

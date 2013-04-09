@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <title>Apache SOLR and Carrot<sup>2</sup> integration strategies</title>
 
-    <link href="assets/css/bootstrap.css" rel="stylesheet" />
-    <link href="assets/css/prettify.css" rel="stylesheet" />
+    <link href="../assets/css/bootstrap.css" rel="stylesheet" />
+    <link href="../assets/css/prettify.css" rel="stylesheet" />
   </head>
 
   <body>
@@ -29,17 +29,22 @@
             git clone https://github.com/carrot2/solr-integration-strategies.git
           </pre>
 
-          <p>A local copy of Solr 4.2 will be required.</p>
+          <p>A local copy of Solr 4.2.1 will be required.</p>
           <pre>
             cd solr-integration-strategies
-            cd solr-configs
-            wget -c -t0 -T30 http://www.us.apache.org/dist/lucene/solr/4.2.0/solr-4.2.0.tgz
-            tar -zxf solr-4.2.0.tgz
+            cd carrot2-3.6.3/
+            wget -c -t0 -T30 http://www.us.apache.org/dist/lucene/solr/4.2.1/solr-4.2.1.tgz
+            tar -zxf solr-4.2.1.tgz
           </pre>
 
-          <p>The project contains an example Solr configuration (including data schema)
+          <div class="alert alert-danger">
+            Solr configuration files contain hardcoded paths. Use exactly the same Solr version
+            or alter the configuration files accordingly.
+          </div>
+
+          <p>This example contains a demo Solr configuration (including data schema)
             and some sample documents from the 20-newsgroups collection. The following command starts
-            Solr and imports these documents. Should be executed from another shell session
+            Solr and imports these documents. Solr should be started from another shell session
             since it won't return to shell.</p>
 
           <pre>
@@ -51,7 +56,7 @@
           <p>Once started, the search core should be visible in the administrative panel at
           <a href="http://localhost:8983/solr/#/example" target="_blank">http://localhost:8983/solr/#/example</a>.</p>
 
-          <p>To import example documents execute the following commands:</p>
+          <p>To import example documents execute the following commands from top-level repository checkout folder:</p>
 
           <pre>
             cd solr-docs
@@ -79,7 +84,16 @@
           <h3>Clustering inside Solr, entire fields</h3>
 
           <p>This configuration clusters the selected fields of Solr documents returned
-            for a given query.</p>
+            for a given query on Solr side, as shown in the figure below.</p>
+
+          <p class="pagination-centered">
+            <img src="../assets/strategies-2.png" class="img-polaroid" />
+          </p>
+
+          <p>
+            We will consider a few variants of this configuration in which either full content of fields or just their
+            fragments are used for clustering.
+          </p>
 
           <div class="alert alert-danger">
             <strong>Warning!</strong> Clustering full content of large fields may be very slow and
@@ -95,8 +109,8 @@
                 the paths provided to <code>lib</code> are resolved relative to the core's directory (unless they
                 are absolute). This can be tricky. For our layout the configuration is:</p>
               <pre class="escape prettyprint">
-                <lib dir="../../solr-4.2.0/contrib/clustering/lib/" regex=".*\.jar"></lib>
-                <lib dir="../../solr-4.2.0/dist/" regex=".*solr-clustering-.*\.jar"></lib>
+                <lib dir="../../solr-4.2.1/contrib/clustering/lib/" regex=".*\.jar"></lib>
+                <lib dir="../../solr-4.2.1/dist/" regex=".*solr-clustering-.*\.jar"></lib>
               </pre>
             </dd>
 
@@ -161,7 +175,7 @@
                 results will be meaningful if more than 100 documents are available to the algorithm. This does add up to each query's cost on
                 Solr, in addition to the clustering itself.</p>
 
-              <p>A query sent to this handler will fetch a large file, we will try to do something with this in the
+              <p>A <a target="_blank" href="http://localhost:8983/solr/example/config1_1?q=memory&wt=xml&indent=true">query sent to this handler</a> will fetch a large file, we will try to do something with this in the
               next section:</p>
               <pre>
                 wget -q -O - "http://localhost:8983/solr/example/config1_1?q=memory&wt=xml&indent=true" | wc -c
@@ -186,7 +200,7 @@
                 <str name="fl">name,title,score</str>
               </pre>
 
-              <p>This results in an much smaller response:</p>
+              <p><a target="_blank" href="http://localhost:8983/solr/example/config1_2?q=memory&wt=xml&indent=true">This results in an much smaller</a> response:</p>
               <pre>
                 wget -q -O - "http://localhost:8983/solr/example/config1_2?q=memory&wt=xml&indent=true" | wc -c
                 22895
@@ -235,6 +249,11 @@
                   </arr>
                 </requestHandler>
               </pre>
+
+              <p>
+                <a target="_blank" href="http://localhost:8983/solr/example/config1_3?q=memory&wt=xml&indent=true">The output of this handler</a> contains
+                the snippets and clusters created on top of full field contents.
+              </p>
 
               <pre>
                 wget -q -O - "http://localhost:8983/solr/example/config1_3?q=memory&wt=xml&indent=true" | wc -c
@@ -327,8 +346,8 @@
               </div>
 
               <p>
-                Note that clustering and highlighter fragments are independent so it's possible to use both at the
-                same time, as shown below.
+                Note that clustering and highlighter fragments are independent so it's <a target="_blank" href="http://localhost:8983/solr/example/config2_2?q=memory&wt=xml&indent=true">
+                possible to use both at the same time, as shown below.</a>
               </p>
 
               <pre class="escape prettyprint">
@@ -376,35 +395,57 @@
 
           <h3>Displaying Solr-clustered results in Carrot<sup>2</sup> webapp and Workbench</h3>
 
-          <p>Carrot<sup>2</sup>'s web application and the Workbench can serve as front-ends
-            for Solr-clustered search results (starting from Carrot<sup>2</sup> version
-            <code>3.6.3</code>), even though their primary purpose is to
-            perform clustering, not just provide the user interface for clusters generated
-            somewhere else.</p>
+          <p>Typically, the clustering process would take place outside of Solr,
+            on a dedicated Carrot<sup>2</sup> webapp server or proxy, as shown below.</p>
 
-          <p>For both applications the trick is to use an XSLT stylesheet that will translate
+          <p class="pagination-centered">
+            <img src="../assets/strategies-1.png" class="img-polaroid" />
+          </p>
+
+          <p>When using the clustering Workbench, clustering takes place on the user side:</p>
+
+          <p class="pagination-centered">
+            <img src="../assets/strategies-3.png" class="img-polaroid" />
+          </p>
+
+          <p>
+            Even though not designed for such a use case, Carrot<sup>2</sup>'s
+            web application and the Workbench can serve as front-ends
+            for Solr-clustered search results (starting from Carrot<sup>2</sup> version
+            <code>3.6.3</code>). For both applications the trick is to use an XSLT stylesheet that will translate
             Solr's XML output into Carrot<sup>2</sup> results format and use a pass-through algorithm
-            that does not perform any clustering, only copies input clusters to the output.</p>
+            that does not perform any clustering, only copies input clusters to the output. We will then have
+            the following situation:</p>
+
+          <p class="pagination-centered">
+            <img src="../assets/strategies-2.png" class="img-polaroid" />
+          </p>
+
+          <p>And the Workbench will connect to Solr directly as well:</p>
+
+          <p class="pagination-centered">
+            <img src="../assets/strategies-4.png" class="img-polaroid" />
+          </p>
 
           <p>Solr's output can vary depending on the schema so there is no one solution that fits
-            all the configurations. For our examples we will use Solr's handler that returns
+            all the possible Solr configurations. For our examples we will use Solr's handler that returns
             highlighter snippets and clusters described above (configuration <code>/config2_2</code>),
             combined with an XSLT template
             that adapts the result for Carrot<sup>2</sup>. Note the <code>name</code> field
             is used as the document identifier.</p>
 
-          <p>The stylesheet performing the conversion is available here: <a href="assets/solr-to-c2.xsl">assets/solr-to-c2.xsl</a>.
+          <p>The stylesheet performing the conversion is available here: <a href="solr-to-c2.xsl">solr-to-c2.xsl</a>.
             Once downloaded, the Workbench's source configuration can be set up to fetch documents from Solr and show clusters
             contained in the response (see highlighted fields in the figure below).
           </p>
 
-          <div>
-            <img src="assets/capture-1-highlights.png" class="img-polaroid" />
-          </div>
+          <p>
+            <img src="../assets/capture-1-highlights.png" class="img-polaroid" />
+          </p>
 
-          <p style="margin-top: 2em">The web application can be configured in a similar fashion by modifying the default
-            component suite and preconfiguring an XML document source. Start by fetching the source code
-            of the web application.</p>
+          <p>The webapp can be configured in a similar fashion by modifying the default
+            component suite and preconfiguring an XML document source. Start by fetching the WAR file
+            of the webapp:</p>
 
           <pre>
             wget http://download.carrot2.org/stable/3.6.3/carrot2-webapp-3.6.3.war
@@ -467,11 +508,11 @@
           to <code>WEB-INF/classes/solr-to-c2.xsl</code>. When this context (or repacked WAR file) is deployed in a servlet
           container it will query Solr instance and displays the clusters received from it.</p>
 
-          <div>
-            <img src="assets/capture-2.png" class="img-polaroid" />
-          </div>
+          <p>
+            <img src="../assets/capture-2.png" class="img-polaroid" />
+          </p>
 
-          <div style="margin-top: 2em;" class="alert alert-info">
+          <div class="alert alert-info">
             Note that the above examples stretch the functionality of Carrot<sup>2</sup> examples to what they
             were not designed for. In production environments you will probably want to write your own handler of
             Solr search/ clustered results that doesn't go through XSLT overhead, etc.
@@ -480,16 +521,23 @@
 
           <h3>Clustering of entire fields outside Solr</h3>
 
+          <p>We have already visited this setup when talking about connecting Workbench to display Solr's clusters:</p>
+
+          <p class="pagination-centered">
+            <img src="../assets/strategies-3.png" class="img-polaroid" />
+          </p>
+
           <p>This is pretty much what <code>SolrDocumentSource</code> does by default. You just need to map
             Carrot<sup>2</sup> logical document sections (title, snippet, url) to Solr's schema and make sure
             the handler returns those fields as described when discussing different handler
             configurations above.</p>
 
-          <p>Full fields clustering outside Solr may incur large network overhead penalty and will result in odd-looking long
+          <p>Note that full fields clustering outside Solr may incur large network overhead penalty associated
+            with fetching long fields over the network and may result in odd-looking long
             snippets if stored Solr fields are lengthy. For Workbench this can be tuned inside preferences, as shown below.</p>
 
           <div>
-            <img src="assets/capture-3-highlights.png" class="img-polaroid" />
+            <img src="../assets/capture-3-highlights.png" class="img-polaroid" />
           </div>
 
 
@@ -507,8 +555,8 @@
       </div>
     </div>
 
-    <script src="assets/js/jquery-1.8.2.min.js"></script>
-    <script src="assets/js/prettify.js"></script>
+    <script src="../assets/js/jquery-1.8.2.min.js"></script>
+    <script src="../assets/js/prettify.js"></script>
     <script>
       (function() {
         function trimIndent(ms) {

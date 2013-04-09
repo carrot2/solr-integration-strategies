@@ -8,8 +8,8 @@
   <!--
    These are relative from a core's directory.
   -->
-  <lib dir="../../solr-4.2.0/contrib/clustering/lib/" regex=".*\.jar" />
-  <lib dir="../../solr-4.2.0/dist/" regex=".*solr-clustering-.*\.jar" />
+  <lib dir="../../solr-4.2.1/contrib/clustering/lib/" regex=".*\.jar" />
+  <lib dir="../../solr-4.2.1/dist/" regex=".*solr-clustering-.*\.jar" />
 
   <!-- Index and data storage. -->
 
