@@ -111,8 +111,8 @@
                 the paths provided to <code>lib</code> are resolved relative to the core's directory (unless they
                 are absolute). This can be tricky. For our layout the configuration is:</p>
               <pre class="escape prettyprint">
-                <lib dir="../../solr-4.2.1/contrib/clustering/lib/" regex=".*\.jar"></lib>
-                <lib dir="../../solr-4.2.1/dist/" regex=".*solr-clustering-.*\.jar"></lib>
+                &lt;lib dir=&quot;../../solr-4.2.1/contrib/clustering/lib/&quot; regex=&quot;.*\.jar&quot;&gt;&lt;/lib&gt;
+                &lt;lib dir=&quot;../../solr-4.2.1/dist/&quot; regex=&quot;.*solr-clustering-.*\.jar&quot;&gt;&lt;/lib&gt;
               </pre>
             </dd>
 
@@ -124,16 +124,16 @@
                 search component with one algorithm (the open source Lingo).</p>
 
               <pre class="escape prettyprint">
-                <searchComponent name="clustering" enable="true" class="solr.clustering.ClusteringComponent">
-                  <lst name="engine">
-                    <str name="name">default</str>
-                    <str name="carrot.algorithm">org.carrot2.clustering.lingo.LingoClusteringAlgorithm</str>
+                &lt;searchComponent name=&quot;clustering&quot; enable=&quot;true&quot; class=&quot;solr.clustering.ClusteringComponent&quot;&gt;
+                  &lt;lst name=&quot;engine&quot;&gt;
+                    &lt;str name=&quot;name&quot;&gt;default&lt;/str&gt;
+                    &lt;str name=&quot;carrot.algorithm&quot;&gt;org.carrot2.clustering.lingo.LingoClusteringAlgorithm&lt;/str&gt;
 
-                    <str name="LingoClusteringAlgorithm.desiredClusterCountBase">20</str>
-                    <str name="carrot.lexicalResourcesDir">clustering/carrot2</str>
-                    <str name="MultilingualClustering.defaultLanguage">ENGLISH</str>
-                  </lst>
-                </searchComponent>
+                    &lt;str name=&quot;LingoClusteringAlgorithm.desiredClusterCountBase&quot;&gt;20&lt;/str&gt;
+                    &lt;str name=&quot;carrot.lexicalResourcesDir&quot;&gt;clustering/carrot2&lt;/str&gt;
+                    &lt;str name=&quot;MultilingualClustering.defaultLanguage&quot;&gt;ENGLISH&lt;/str&gt;
+                  &lt;/lst&gt;
+                &lt;/searchComponent&gt;
               </pre>
             </dd>
 
@@ -144,31 +144,31 @@
                 are returned, followed by information about clusters.</p>
 
               <pre class="escape prettyprint">
-                <requestHandler name="/config1_1" class="solr.SearchHandler">
-                  <lst name="defaults">
-                    <str name="defType">edismax</str>
-                    <str name="qf">
+                &lt;requestHandler name=&quot;/config1_1&quot; class=&quot;solr.SearchHandler&quot;&gt;
+                  &lt;lst name=&quot;defaults&quot;&gt;
+                    &lt;str name=&quot;defType&quot;&gt;edismax&lt;/str&gt;
+                    &lt;str name=&quot;qf&quot;&gt;
                       title^1.5 content^1.0
-                    </str>
-                    <str name="rows">100</str>
-                    <str name="fl">*,score</str>
+                    &lt;/str&gt;
+                    &lt;str name=&quot;rows&quot;&gt;100&lt;/str&gt;
+                    &lt;str name=&quot;fl&quot;&gt;*,score&lt;/str&gt;
 
-                    <!-- Enable clustering. -->
-                    <bool name="clustering">true</bool>          <!-- enable clustering -->
-                    <bool name="clustering.results">true</bool>  <!-- cluster search results, not the collection -->
-                    <str  name="clustering.engine">default</str> <!-- use the default engine -->
+                    &lt;!-- Enable clustering. --&gt;
+                    &lt;bool name=&quot;clustering&quot;&gt;true&lt;/bool&gt;          &lt;!-- enable clustering --&gt;
+                    &lt;bool name=&quot;clustering.results&quot;&gt;true&lt;/bool&gt;  &lt;!-- cluster search results, not the collection --&gt;
+                    &lt;str  name=&quot;clustering.engine&quot;&gt;default&lt;/str&gt; &lt;!-- use the default engine --&gt;
 
-                    <!-- Solr-to-Carrot2 field mapping. -->
-                    <str  name="carrot.url">name</str>           <!-- unique ID field, doesn't have to be an URL -->
-                    <str  name="carrot.title">title</str>        <!-- document title field. -->
-                    <str  name="carrot.snippet">content</str>    <!-- document "contents" field -->
-                  </lst>
+                    &lt;!-- Solr-to-Carrot2 field mapping. --&gt;
+                    &lt;str  name=&quot;carrot.url&quot;&gt;name&lt;/str&gt;           &lt;!-- unique ID field, doesn't have to be an URL --&gt;
+                    &lt;str  name=&quot;carrot.title&quot;&gt;title&lt;/str&gt;        &lt;!-- document title field. --&gt;
+                    &lt;str  name=&quot;carrot.snippet&quot;&gt;content&lt;/str&gt;    &lt;!-- document &quot;contents&quot; field --&gt;
+                  &lt;/lst&gt;
 
-                  <!-- Attach clustering as the last processing component. -->
-                  <arr name="last-components">
-                    <str>clustering</str>
-                  </arr>
-                </requestHandler>
+                  &lt;!-- Attach clustering as the last processing component. --&gt;
+                  &lt;arr name=&quot;last-components&quot;&gt;
+                    &lt;str&gt;clustering&lt;/str&gt;
+                  &lt;/arr&gt;
+                &lt;/requestHandler&gt;
               </pre>
 
               <p>Note the mapping between Solr document's fields and "logical" document sections requried by Carrot<sup>2</sup>.
@@ -195,11 +195,11 @@
               one could restrict the fields to just the ID field (<code>name</code> in this example).</p>
 
               <pre class="escape prettyprint">
-                <!--
+                &lt;!--
                 Restrict the returned fields to just the name and title.
                 contents can be too large to display anyway.
-                -->
-                <str name="fl">name,title,score</str>
+                --&gt;
+                &lt;str name=&quot;fl&quot;&gt;name,title,score&lt;/str&gt;
               </pre>
 
               <p><a target="_blank" href="http://localhost:8983/solr/example/config1_2?q=memory&wt=xml&indent=true">This results in an much smaller</a> response:</p>
@@ -218,38 +218,38 @@
                 Clusters are unaffected in this configuration (full content field is still clustered).</p>
 
               <pre class="escape prettyprint">
-                <requestHandler name="/config1_3" class="solr.SearchHandler">
-                  <lst name="defaults">
-                    <str name="defType">edismax</str>
-                    <str name="qf">
+                &lt;requestHandler name=&quot;/config1_3&quot; class=&quot;solr.SearchHandler&quot;&gt;
+                  &lt;lst name=&quot;defaults&quot;&gt;
+                    &lt;str name=&quot;defType&quot;&gt;edismax&lt;/str&gt;
+                    &lt;str name=&quot;qf&quot;&gt;
                       title^1.5 content^1.0
-                    </str>
-                    <str name="rows">100</str>
+                    &lt;/str&gt;
+                    &lt;str name=&quot;rows&quot;&gt;100&lt;/str&gt;
 
-                    <str name="fl">name,title,score</str>
+                    &lt;str name=&quot;fl&quot;&gt;name,title,score&lt;/str&gt;
 
-                    <!-- Enable highlighter for the content field -->
-                    <bool name="hl">true</bool>
-                    <str  name="hl.fl">content</str>
-                    <!-- Disable highlight wrapping. -->
-                    <str name="hl.simple.pre"><!-- --></str>
-                    <str name="hl.simple.post"><!-- --></str>
-                    <str name="f.content.hl.snippets">3</str> <!-- max 3 snippets of 200 chars. -->
-                    <str name="f.content.hl.fragsize">200</str>
+                    &lt;!-- Enable highlighter for the content field --&gt;
+                    &lt;bool name=&quot;hl&quot;&gt;true&lt;/bool&gt;
+                    &lt;str  name=&quot;hl.fl&quot;&gt;content&lt;/str&gt;
+                    &lt;!-- Disable highlight wrapping. --&gt;
+                    &lt;str name=&quot;hl.simple.pre&quot;&gt;&lt;!-- --&gt;&lt;/str&gt;
+                    &lt;str name=&quot;hl.simple.post&quot;&gt;&lt;!-- --&gt;&lt;/str&gt;
+                    &lt;str name=&quot;f.content.hl.snippets&quot;&gt;3&lt;/str&gt; &lt;!-- max 3 snippets of 200 chars. --&gt;
+                    &lt;str name=&quot;f.content.hl.fragsize&quot;&gt;200&lt;/str&gt;
 
-                    <bool name="clustering">true</bool>
-                    <bool name="clustering.results">true</bool>
-                    <str name="clustering.engine">default</str>
+                    &lt;bool name=&quot;clustering&quot;&gt;true&lt;/bool&gt;
+                    &lt;bool name=&quot;clustering.results&quot;&gt;true&lt;/bool&gt;
+                    &lt;str name=&quot;clustering.engine&quot;&gt;default&lt;/str&gt;
 
-                    <str  name="carrot.url">name</str>
-                    <str  name="carrot.title">title</str>
-                    <str  name="carrot.snippet">content</str>
-                  </lst>
+                    &lt;str  name=&quot;carrot.url&quot;&gt;name&lt;/str&gt;
+                    &lt;str  name=&quot;carrot.title&quot;&gt;title&lt;/str&gt;
+                    &lt;str  name=&quot;carrot.snippet&quot;&gt;content&lt;/str&gt;
+                  &lt;/lst&gt;
 
-                  <arr name="last-components">
-                    <str>clustering</str>
-                  </arr>
-                </requestHandler>
+                  &lt;arr name=&quot;last-components&quot;&gt;
+                    &lt;str&gt;clustering&lt;/str&gt;
+                  &lt;/arr&gt;
+                &lt;/requestHandler&gt;
               </pre>
 
               <p>
@@ -289,35 +289,35 @@
               pass <code>carrot.produceSummary</code> attribute in Solr's handler configuration, as shown below:</p>
 
               <pre class="escape prettyprint">
-                <requestHandler name="/config2_1" class="solr.SearchHandler">
-                  <lst name="defaults">
-                    <str name="defType">edismax</str>
-                    <str name="qf">
+                &lt;requestHandler name=&quot;/config2_1&quot; class=&quot;solr.SearchHandler&quot;&gt;
+                  &lt;lst name=&quot;defaults&quot;&gt;
+                    &lt;str name=&quot;defType&quot;&gt;edismax&lt;/str&gt;
+                    &lt;str name=&quot;qf&quot;&gt;
                       title^1.5 content^1.0
-                    </str>
-                    <str name="rows">100</str>
+                    &lt;/str&gt;
+                    &lt;str name=&quot;rows&quot;&gt;100&lt;/str&gt;
 
-                    <str name="fl">name,title,score</str>
+                    &lt;str name=&quot;fl&quot;&gt;name,title,score&lt;/str&gt;
 
-                    <bool name="clustering">true</bool>
-                    <bool name="clustering.results">true</bool>
-                    <str  name="clustering.engine">default</str>
+                    &lt;bool name=&quot;clustering&quot;&gt;true&lt;/bool&gt;
+                    &lt;bool name=&quot;clustering.results&quot;&gt;true&lt;/bool&gt;
+                    &lt;str  name=&quot;clustering.engine&quot;&gt;default&lt;/str&gt;
 
-                    <!-- field mapping -->
-                    <str  name="carrot.url">name</str>
-                    <str  name="carrot.title">title</str>
-                    <str  name="carrot.snippet">content</str>
+                    &lt;!-- field mapping --&gt;
+                    &lt;str  name=&quot;carrot.url&quot;&gt;name&lt;/str&gt;
+                    &lt;str  name=&quot;carrot.title&quot;&gt;title&lt;/str&gt;
+                    &lt;str  name=&quot;carrot.snippet&quot;&gt;content&lt;/str&gt;
 
-                    <!-- enable clustering on highlighted fragments only. -->
-                    <str name="carrot.produceSummary">true</str>
-                    <!-- take a max. of 3 fragments from each document's match. -->
-                    <str name="carrot.summarySnippets">3</str>
-                  </lst>
+                    &lt;!-- enable clustering on highlighted fragments only. --&gt;
+                    &lt;str name=&quot;carrot.produceSummary&quot;&gt;true&lt;/str&gt;
+                    &lt;!-- take a max. of 3 fragments from each document's match. --&gt;
+                    &lt;str name=&quot;carrot.summarySnippets&quot;&gt;3&lt;/str&gt;
+                  &lt;/lst&gt;
 
-                  <arr name="last-components">
-                    <str>clustering</str>
-                  </arr>
-                </requestHandler>
+                  &lt;arr name=&quot;last-components&quot;&gt;
+                    &lt;str&gt;clustering&lt;/str&gt;
+                  &lt;/arr&gt;
+                &lt;/requestHandler&gt;
               </pre>
 
               <p>
@@ -353,44 +353,44 @@
               </p>
 
               <pre class="escape prettyprint">
-                <requestHandler name="/config2_2" class="solr.SearchHandler">
-                  <lst name="defaults">
-                    <str name="defType">edismax</str>
-                    <str name="qf">
+                &lt;requestHandler name=&quot;/config2_2&quot; class=&quot;solr.SearchHandler&quot;&gt;
+                  &lt;lst name=&quot;defaults&quot;&gt;
+                    &lt;str name=&quot;defType&quot;&gt;edismax&lt;/str&gt;
+                    &lt;str name=&quot;qf&quot;&gt;
                       title^1.5 content^1.0
-                    </str>
-                    <str name="rows">100</str>
+                    &lt;/str&gt;
+                    &lt;str name=&quot;rows&quot;&gt;100&lt;/str&gt;
 
-                    <str name="fl">name,title,score</str>
+                    &lt;str name=&quot;fl&quot;&gt;name,title,score&lt;/str&gt;
 
-                    <!-- Enable highlighter for the content field -->
-                    <bool name="hl">true</bool>
-                    <str  name="hl.fl">content</str>
-                    <!-- Disable highlight wrapping. -->
-                    <str name="hl.simple.pre"><!-- --></str>
-                    <str name="hl.simple.post"><!-- --></str>
-                    <str name="f.content.hl.snippets">3</str> <!-- max 3 snippets of 200 chars. -->
-                    <str name="f.content.hl.fragsize">200</str>
+                    &lt;!-- Enable highlighter for the content field --&gt;
+                    &lt;bool name=&quot;hl&quot;&gt;true&lt;/bool&gt;
+                    &lt;str  name=&quot;hl.fl&quot;&gt;content&lt;/str&gt;
+                    &lt;!-- Disable highlight wrapping. --&gt;
+                    &lt;str name=&quot;hl.simple.pre&quot;&gt;&lt;!-- --&gt;&lt;/str&gt;
+                    &lt;str name=&quot;hl.simple.post&quot;&gt;&lt;!-- --&gt;&lt;/str&gt;
+                    &lt;str name=&quot;f.content.hl.snippets&quot;&gt;3&lt;/str&gt; &lt;!-- max 3 snippets of 200 chars. --&gt;
+                    &lt;str name=&quot;f.content.hl.fragsize&quot;&gt;200&lt;/str&gt;
 
-                    <bool name="clustering">true</bool>
-                    <bool name="clustering.results">true</bool>
-                    <str  name="clustering.engine">default</str>
+                    &lt;bool name=&quot;clustering&quot;&gt;true&lt;/bool&gt;
+                    &lt;bool name=&quot;clustering.results&quot;&gt;true&lt;/bool&gt;
+                    &lt;str  name=&quot;clustering.engine&quot;&gt;default&lt;/str&gt;
 
-                    <!-- field mapping -->
-                    <str  name="carrot.url">name</str>
-                    <str  name="carrot.title">title</str>
-                    <str  name="carrot.snippet">content</str>
+                    &lt;!-- field mapping --&gt;
+                    &lt;str  name=&quot;carrot.url&quot;&gt;name&lt;/str&gt;
+                    &lt;str  name=&quot;carrot.title&quot;&gt;title&lt;/str&gt;
+                    &lt;str  name=&quot;carrot.snippet&quot;&gt;content&lt;/str&gt;
 
-                    <!-- enable clustering on highlighted fragments only. -->
-                    <str name="carrot.produceSummary">true</str>
-                    <!-- take a max. of 3 fragments from each document's match. -->
-                    <str name="carrot.summarySnippets">3</str>
-                  </lst>
+                    &lt;!-- enable clustering on highlighted fragments only. --&gt;
+                    &lt;str name=&quot;carrot.produceSummary&quot;&gt;true&lt;/str&gt;
+                    &lt;!-- take a max. of 3 fragments from each document's match. --&gt;
+                    &lt;str name=&quot;carrot.summarySnippets&quot;&gt;3&lt;/str&gt;
+                  &lt;/lst&gt;
 
-                  <arr name="last-components">
-                    <str>clustering</str>
-                  </arr>
-                </requestHandler>
+                  &lt;arr name=&quot;last-components&quot;&gt;
+                    &lt;str&gt;clustering&lt;/str&gt;
+                  &lt;/arr&gt;
+                &lt;/requestHandler&gt;
               </pre>
             </dd>
           </dl>
@@ -459,58 +459,57 @@
           <p>Edit <code>suite-webapp.xml</code> to point at the Solr instance and contain just the pass-through algorithm.</p>
 
           <pre class="escape prettyprint">
-            <component-suite>
-              <sources>
-                <source component-class="org.carrot2.source.solr.SolrDocumentSource" id="solr"
-                        attribute-sets-resource="source-solr-attributes.xml">
-                <label>Solr</label>
-                <title>Solr Search Engine</title>
-                <icon-path>icons/solr.png</icon-path>
-                <mnemonic>s</mnemonic>
-                <description>Solr document source queries an instance of Apache Solr search engine.</description>
-                <example-queries>
-                  <example-query>test</example-query>
-                  <example-query>solr</example-query>
-                </example-queries>
-                </source>
-              </sources>
+            &lt;component-suite&gt;
+              &lt;sources&gt;
+                &lt;source component-class=&quot;org.carrot2.source.solr.SolrDocumentSource&quot; id=&quot;solr&quot; attribute-sets-resource=&quot;source-solr-attributes.xml&quot;&gt;
+                  &lt;label&gt;Solr&lt;/label&gt;
+                  &lt;title&gt;Solr Search Engine&lt;/title&gt;
+                  &lt;icon-path&gt;icons/solr.png&lt;/icon-path&gt;
+                  &lt;mnemonic&gt;s&lt;/mnemonic&gt;
+                  &lt;description&gt;Solr document source queries an instance of Apache Solr search engine.&lt;/description&gt;
+                  &lt;example-queries&gt;
+                    &lt;example-query&gt;test&lt;/example-query&gt;
+                    &lt;example-query&gt;solr&lt;/example-query&gt;
+                  &lt;/example-queries&gt;
+                &lt;/source&gt;
+              &lt;/sources&gt;
 
-              <!-- Algorithms -->
-              <include suite="algorithm-passthrough.xml" />
-            </component-suite>
+              &lt;!-- Algorithms --&gt;
+              &lt;include suite=&quot;algorithm-passthrough.xml&quot;&gt;&lt;/include&gt;
+            &lt;/component-suite&gt;
           </pre>
 
           <p>The address and remaining attributes of Solr need to be placed into <code>source-solr-attributes.xml</code>.</p>
 
           <pre class="escape prettyprint">
-            <attribute-sets default="overridden-attributes">
-              <attribute-set id="overridden-attributes">
-                <value-set>
-                  <label>overridden-attributes</label>
+            &lt;attribute-sets default=&quot;overridden-attributes&quot;&gt;
+              &lt;attribute-set id=&quot;overridden-attributes&quot;&gt;
+                &lt;value-set&gt;
+                  &lt;label&gt;overridden-attributes&lt;/label&gt;
 
-                  <attribute key="SolrDocumentSource.serviceUrlBase">
-                    <value value="http://localhost:8983/solr/example/config2_2"/>
-                  </attribute>
-                  <attribute key="SolrDocumentSource.solrSummaryFieldName">
-                    <value value="content"/>
-                  </attribute>
-                  <attribute key="SolrDocumentSource.solrTitleFieldName">
-                    <value value="title"/>
-                  </attribute>
-                  <attribute key="SolrDocumentSource.solrUrlFieldName">
-                    <value value="name"/>
-                  </attribute>
+                  &lt;attribute key=&quot;SolrDocumentSource.serviceUrlBase&quot;&gt;
+                    &lt;value value=&quot;http://localhost:8983/solr/example/config2_2&quot;/&gt;
+                  &lt;/attribute&gt;
+                  &lt;attribute key=&quot;SolrDocumentSource.solrSummaryFieldName&quot;&gt;
+                    &lt;value value=&quot;content&quot;/&gt;
+                  &lt;/attribute&gt;
+                  &lt;attribute key=&quot;SolrDocumentSource.solrTitleFieldName&quot;&gt;
+                    &lt;value value=&quot;title&quot;/&gt;
+                  &lt;/attribute&gt;
+                  &lt;attribute key=&quot;SolrDocumentSource.solrUrlFieldName&quot;&gt;
+                    &lt;value value=&quot;name&quot;/&gt;
+                  &lt;/attribute&gt;
 
-                  <!-- Proxy clusters from Solr. Link on 'name' field. -->
-                  <attribute key="SolrDocumentSource.solrIdFieldName">
-                    <value value="name"/>
-                  </attribute>
-                  <attribute key="SolrDocumentSource.readClusters">
-                    <value value="true"/>
-                  </attribute>
-                </value-set>
-              </attribute-set>
-            </attribute-sets>
+                  &lt;!-- Proxy clusters from Solr. Link on 'name' field. --&gt;
+                  &lt;attribute key=&quot;SolrDocumentSource.solrIdFieldName&quot;&gt;
+                    &lt;value value=&quot;name&quot;/&gt;
+                  &lt;/attribute&gt;
+                  &lt;attribute key=&quot;SolrDocumentSource.readClusters&quot;&gt;
+                    &lt;value value=&quot;true&quot;/&gt;
+                  &lt;/attribute&gt;
+                &lt;/value-set&gt;
+              &lt;/attribute-set&gt;
+            &lt;/attribute-sets&gt;
           </pre>
 
           <p>Note that the default Carrot<sup>2</sup> interface exposes customizable document source attributes,
@@ -599,12 +598,7 @@
 
         $("pre").each(function(i,e) {
           e = $(e);
-          var text;
-          if (e.hasClass("escape")) {
-            text = e.html();
-          } else {
-            text = e.text();
-          }
+          var text = e.text();
           e.text(trimIndent(text));
         });
         prettyPrint();
