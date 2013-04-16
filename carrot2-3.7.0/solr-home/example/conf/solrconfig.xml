@@ -56,7 +56,7 @@
   <searchComponent name="clustering" enable="true" class="solr.clustering.ClusteringComponent" >
     <lst name="engine">
       <str name="name">default</str>
-      <str name="carrot.algorithm">com.carrotsearch.lingo3g.Lingo3GClusteringAlgorithm</str>
+      <str name="carrot.algorithm">org.carrot2.clustering.lingo.LingoClusteringAlgorithm</str>
 
       <str name="LingoClusteringAlgorithm.desiredClusterCountBase">20</str>
       <str name="carrot.lexicalResourcesDir">clustering/carrot2</str>
