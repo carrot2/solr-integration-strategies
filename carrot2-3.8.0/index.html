@@ -16,7 +16,7 @@
             <h1>Apache SOLR and Carrot<sup>2</sup> integration strategies</h1>
           </div>
 
-          <p><span class="badge badge-important">Carrot2 3.8.0</span>, <span class="badge badge-important">Solr 4.5-SNAPSHOT</span></p>
+          <p><span class="badge badge-important">Carrot2 3.8.0</span>, <span class="badge badge-important">Solr 4.6</span></p>
 
           <p>Adding clustering of search results to Apache Solr can be done in several ways,
           depending on where the clustering takes place, which fields are picked for clustering
@@ -31,13 +31,12 @@
             git clone https://github.com/carrot2/solr-integration-strategies.git
           </pre>
 
-          <p>A local copy of Solr 4.5 will be required.</p>
+          <p>A local copy of Solr 4.6 will be required.</p>
           <pre>
             cd solr-integration-strategies
             cd carrot2-3.8.0/
-            <!-- wget -c -t0 -T30 http://www.us.apache.org/dist/lucene/solr/4.5/solr-4.5.tgz -->
-            # Build Solr 4.5 package locally from sources (SNAPSHOT), then unpack the package with
-            tar -zxf solr-4.5-SNAPSHOT.tgz
+            wget -c -t0 -T30 http://www.us.apache.org/dist/lucene/solr/4.6.0/solr-4.6.0.tgz
+            tar -zxf solr-*.tgz
           </pre>
 
           <div class="alert alert-danger">
@@ -83,6 +82,12 @@
 
           <p>All examples in this chapter assume a certain fixed choice in the above set of configuration
           options. Pick the one closest to your own.</p>
+          
+          <div class="alert alert-danger">
+            <strong>Important!</strong> Any examples below assume that clustering takes place on Solr fields that
+            are <b>stored</b>. Clustering will not be possible for index-only fields (because there is physically no
+            content to retrieve from such a field).
+          </div>
 
           <h3>Clustering inside Solr, entire fields</h3>
 
@@ -112,8 +117,8 @@
                 the paths provided to <code>lib</code> are resolved relative to the core's directory (unless they
                 are absolute). This can be tricky. For our layout the configuration is:</p>
               <pre class="escape prettyprint">
-                &lt;lib dir=&quot;../../solr-4.5-SNAPSHOT/contrib/clustering/lib/&quot; regex=&quot;.*\.jar&quot;&gt;&lt;/lib&gt;
-                &lt;lib dir=&quot;../../solr-4.5-SNAPSHOT/dist/&quot; regex=&quot;.*solr-clustering-.*\.jar&quot;&gt;&lt;/lib&gt;
+                &lt;lib dir=&quot;../../solr-4.6.0/contrib/clustering/lib/&quot; regex=&quot;.*\.jar&quot;&gt;&lt;/lib&gt;
+                &lt;lib dir=&quot;../../solr-4.6.0/dist/&quot; regex=&quot;.*solr-clustering-.*\.jar&quot;&gt;&lt;/lib&gt;
               </pre>
             </dd>
 
